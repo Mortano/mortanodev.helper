@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mortanodev.helper.test", "mortanodev.helper.test\mortanodev.helper.test.vcxproj", "{CF042A55-A8B4-4C53-82F6-D85E0655C921}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F3E4B489-6B9F-46AC-8860-045360C0320F} = {F3E4B489-6B9F-46AC-8860-045360C0320F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mortanodev.helper", "mortanodev.helper\mortanodev.helper.vcxproj", "{F3E4B489-6B9F-46AC-8860-045360C0320F}"
 EndProject
