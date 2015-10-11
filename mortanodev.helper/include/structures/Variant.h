@@ -64,7 +64,7 @@ struct ConstructHelper<0, First, Rest...> {
 
    static void Destruct(void* src, size_t typeIndex) {
       MDV_ASSERT(typeIndex == 0);
-      auto srcObj = *reinterpret_cast<First*>(src);
+      auto& srcObj = *reinterpret_cast<First*>(src);
       srcObj.~First();
    }
 };
@@ -88,34 +88,33 @@ public:
    Variant() : _index(InvalidIdx) {}
 
    Variant(const ThisType& other) {
-      if (other._index != InvalidIdx)
-      {
+      if (other._index != InvalidIdx) {
          ConstructHelper_t::CopyConstruct(other._data, _data, other._index);
       }
       _index = other._index;
    }
 
    Variant(ThisType&& other) {
-      if (other._index == InvalidIdx)
-      {
+      if (other._index == InvalidIdx) {
          _index = InvalidIdx;
          return;
       }
       ConstructHelper_t::MoveConstruct(other._data, _data, other._index);
       _index = other._index;
-      // We have to set the index of the other object to invalid when moving from
-      // it. However this could prevent
-      // the destructor from executing, so we execute it explicitly after moving!
-      ConstructHelper_t::Destruct(other._data, other._index);
-      other._index = InvalidIdx;
+      // We are NOT deleting the other objects value (if it has one). Variant should behave as if it
+      // is the
+      // contained value, so even if we move from it, it still stores a valid instance (if it did so
+      // before).
+      // The state of that instance is the usual state of objects after being moved from
    }
 
    template <typename T, typename Decayed_t = std::decay_t<T>>
    explicit Variant(T&& val,
                     std::enable_if_t<!std::is_same<ThisType, std::decay_t<T>>::value>* = nullptr) {
-      static_assert(meta::Contains<T, Types>::value, "This is no valid type for this variant!");
+      static_assert(meta::Contains<Decayed_t, Types>::value,
+                    "This is no valid type for this variant!");
       new (_data) Decayed_t(std::forward<T>(val));
-      _index = meta::IndexOf<T, Types>::value;
+      _index = meta::IndexOf<Decayed_t, Types>::value;
    }
 
    ~Variant() {
@@ -149,8 +148,6 @@ public:
          ConstructHelper_t::MoveConstruct(other._data, _data, other._index);
          _index = other._index;
          // See comment in move constructor!
-         ConstructHelper_t::Destruct(other._data, other._index);
-         other._index = InvalidIdx;
       } else {
          _index = InvalidIdx;
       }
@@ -158,10 +155,9 @@ public:
    }
 
    template <typename T, typename Decayed_t = std::decay_t<T>>
-   std::enable_if_t<!std::is_same<ThisType, Decayed_t>::value ,Variant&> operator=(T&& val) {
-      static_assert(meta::Contains<T, Types>::value, "This is no valid type for this variant!");
-      if (_index != InvalidIdx)
-      {
+   std::enable_if_t<!std::is_same<ThisType, Decayed_t>::value, Variant&> operator=(T&& val) {
+      static_assert(meta::Contains<Decayed_t, Types>::value, "This is no valid type for this variant!");
+      if (_index != InvalidIdx) {
          ConstructHelper_t::Destruct(_data, _index);
       }
       new (_data) Decayed_t(std::forward<T>(val));

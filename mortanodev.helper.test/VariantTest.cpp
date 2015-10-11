@@ -9,6 +9,33 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace mortanodevhelpertest
 {		
+
+   struct Counter
+   {
+      static size_t DefaultCtorCalls;
+      static size_t CopyCtorCalls;
+      static size_t MoveCtorCalls;
+      static size_t DtorCalls;
+
+      Counter() { DefaultCtorCalls++; }
+      Counter(const Counter&) { CopyCtorCalls++; }
+      Counter(Counter&&) { MoveCtorCalls++; }
+      ~Counter() { DtorCalls++; }
+
+      static void Reset()
+      {
+         DefaultCtorCalls = 0;
+         CopyCtorCalls = 0;
+         MoveCtorCalls = 0;
+         DtorCalls = 0;
+      }
+   };
+
+   size_t Counter::DefaultCtorCalls = 0;
+   size_t Counter::CopyCtorCalls = 0;
+   size_t Counter::MoveCtorCalls = 0;
+   size_t Counter::DtorCalls = 0;
+
 	TEST_CLASS(VariantTest)
 	{
 	public:
@@ -59,7 +86,7 @@ namespace mortanodevhelpertest
 			mdv::Variant<int> src(42);
 			mdv::Variant<int> dst(std::move(src));
 
-			Assert::IsFalse(src.HasValue());
+			Assert::IsTrue(src.HasValue());
 			Assert::IsTrue(dst.HasValue());
 			Assert::AreEqual(42, dst.Get<int>());
 		}
@@ -82,7 +109,7 @@ namespace mortanodevhelpertest
 
 			dst = std::move(src);
 
-			Assert::IsFalse(src.HasValue());
+			Assert::IsTrue(src.HasValue());
 			Assert::IsTrue(dst.HasValue());
 			Assert::AreEqual(42, dst.Get<int>());
 		}
@@ -143,7 +170,7 @@ namespace mortanodevhelpertest
 			mdv::Variant<std::string> src("Hello"s);
 			mdv::Variant<std::string> dst(std::move(src));
 
-			Assert::IsFalse(src.HasValue());
+			Assert::IsTrue(src.HasValue());
 			Assert::IsTrue(dst.HasValue());
 			Assert::AreEqual("Hello"s, dst.Get<std::string>());
 		}
@@ -168,7 +195,7 @@ namespace mortanodevhelpertest
 
 			dst = std::move(src);
 
-			Assert::IsFalse(src.HasValue());
+			Assert::IsTrue(src.HasValue());
 			Assert::IsTrue(dst.HasValue());
 			Assert::AreEqual("Hello"s, dst.Get<std::string>());
 		}
@@ -270,8 +297,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v2.Is<int>());
          Assert::AreEqual(42, v2.Get<int>());
 
-         Assert::IsFalse(v1.HasValue());
-         Assert::IsFalse(v1.Is<int>());
+         Assert::IsTrue(v1.HasValue());
+         Assert::IsTrue(v1.Is<int>());
 
          Var_t v3(42.f);
          Var_t v4(std::move(v3));
@@ -280,8 +307,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v4.Is<float>());
          Assert::AreEqual(42.f, v4.Get<float>());
 
-         Assert::IsFalse(v3.HasValue());
-         Assert::IsFalse(v3.Is<float>());
+         Assert::IsTrue(v3.HasValue());
+         Assert::IsTrue(v3.Is<float>());
       }
 
       TEST_METHOD(Test_TwoPrimitives_CopyAssign)
@@ -328,8 +355,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v2.Is<int>());
          Assert::AreEqual(42, v2.Get<int>());
 
-         Assert::IsFalse(v1.HasValue());
-         Assert::IsFalse(v1.Is<int>());
+         Assert::IsTrue(v1.HasValue());
+         Assert::IsTrue(v1.Is<int>());
 
          Var_t v3(42.f);
          Var_t v4(23.f);
@@ -340,8 +367,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v4.Is<float>());
          Assert::AreEqual(42.f, v4.Get<float>());
 
-         Assert::IsFalse(v3.HasValue());
-         Assert::IsFalse(v3.Is<int>());
+         Assert::IsTrue(v3.HasValue());
+         Assert::IsTrue(v3.Is<float>());
          
          //Cross asign to different type!
          v4 = std::move(v2);
@@ -350,8 +377,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v4.Is<int>());
          Assert::AreEqual(42, v4.Get<int>());
 
-         Assert::IsFalse(v2.HasValue());
-         Assert::IsFalse(v2.Is<int>());
+         Assert::IsTrue(v2.HasValue());
+         Assert::IsTrue(v2.Is<int>());
       }
 
       TEST_METHOD(Test_TwoPrimitives_ValueAssign)
@@ -468,8 +495,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v2.Is<int>());
          Assert::AreEqual(42, v2.Get<int>());
 
-         Assert::IsFalse(v1.HasValue());
-         Assert::IsFalse(v1.Is<int>());
+         Assert::IsTrue(v1.HasValue());
+         Assert::IsTrue(v1.Is<int>());
 
          Var_t v3("Hello"s);
          Var_t v4(std::move(v3));
@@ -478,8 +505,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v4.Is<std::string>());
          Assert::AreEqual("Hello"s, v4.Get<std::string>());
 
-         Assert::IsFalse(v3.HasValue());
-         Assert::IsFalse(v3.Is<std::string>());
+         Assert::IsTrue(v3.HasValue());
+         Assert::IsTrue(v3.Is<std::string>());
       }
 
       TEST_METHOD(Test_TwoMixed_CopyAssign)
@@ -530,8 +557,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v2.Is<int>());
          Assert::AreEqual(42, v2.Get<int>());
 
-         Assert::IsFalse(v1.HasValue());
-         Assert::IsFalse(v1.Is<int>());
+         Assert::IsTrue(v1.HasValue());
+         Assert::IsTrue(v1.Is<int>());
 
          Var_t v3("Hello"s);
          Var_t v4("HansWurst"s);
@@ -542,8 +569,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v4.Is<std::string>());
          Assert::AreEqual("Hello"s, v4.Get<std::string>());
 
-         Assert::IsFalse(v3.HasValue());
-         Assert::IsFalse(v3.Is<std::string>());
+         Assert::IsTrue(v3.HasValue());
+         Assert::IsTrue(v3.Is<std::string>());
 
          //Cross type assign
          Var_t v5("Hello"s);
@@ -555,8 +582,8 @@ namespace mortanodevhelpertest
          Assert::IsTrue(v6.Is<std::string>());
          Assert::AreEqual("Hello"s, v6.Get<std::string>());
 
-         Assert::IsFalse(v5.HasValue());
-         Assert::IsFalse(v5.Is<std::string>());
+         Assert::IsTrue(v5.HasValue());
+         Assert::IsTrue(v5.Is<std::string>());
       }
 
       TEST_METHOD(Test_TwoMixed_ValueAssign)
@@ -597,6 +624,162 @@ namespace mortanodevhelpertest
 
          Assert::IsFalse(v1.HasValue());
          Assert::IsFalse(v1.Is<std::string>());
+      }
+
+      TEST_METHOD(Test_ConstructorsCalled)
+      {
+         using Var_t = mdv::Variant<Counter>;
+
+         {
+            Var_t v1;
+
+            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(0ULL, Counter::DtorCalls);
+         }
+
+         //No destructors must be called when empty Variant gets destroyed!
+         Assert::AreEqual(0ULL, Counter::DtorCalls);
+
+         {
+            Var_t v2{Counter()};
+
+            Assert::AreEqual(1ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(1ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(1ULL, Counter::DtorCalls);
+         }
+
+         Assert::AreEqual(2ULL, Counter::DtorCalls);
+         Counter::Reset();
+
+         {
+            Counter counter;
+            Var_t v2{ counter };
+
+            Assert::AreEqual(1ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(1ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(0ULL, Counter::DtorCalls);
+         }
+
+         Assert::AreEqual(2ULL, Counter::DtorCalls); //'counter' object and copy inside the variant!
+         Counter::Reset();
+
+         {
+            Counter counter;
+            Var_t v1{ counter };
+
+            Counter::Reset();
+
+            Var_t v2(v1);
+
+            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(1ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(0ULL, Counter::DtorCalls);
+         }
+
+         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Counter::Reset();
+
+         {
+            Counter counter;
+            Var_t v1{ counter };
+
+            Counter::Reset();
+
+            Var_t v2(std::move(v1));
+
+            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(1ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(0ULL, Counter::DtorCalls);
+         }
+
+         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Counter::Reset();
+
+         {
+            Counter counter;
+            Var_t v1{ counter };
+
+            Var_t v2;
+
+            Counter::Reset();
+
+            v2 = v1;
+
+            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(1ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(0ULL, Counter::DtorCalls);
+         }
+
+         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Counter::Reset();
+
+         {
+            Counter counter;
+            Var_t v1{ counter };
+
+            Var_t v2;
+
+            Counter::Reset();
+
+            v2 = std::move(v1);
+
+            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(1ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(0ULL, Counter::DtorCalls);
+         }
+
+         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Counter::Reset();
+
+         {
+            Var_t v1{ Counter() };
+
+            Counter::Reset();
+
+            v1 = Counter();
+
+            Assert::AreEqual(1ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(1ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(2ULL, Counter::DtorCalls);
+
+            Counter tmp;
+
+            Counter::Reset();
+
+            v1 = tmp;
+
+            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(1ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(1ULL, Counter::DtorCalls);
+         }
+
+         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Counter::Reset();
+
+         {
+            Var_t v1{ Counter() };
+
+            Counter::Reset();
+
+            v1.Clear();
+
+            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
+            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
+            Assert::AreEqual(1ULL, Counter::DtorCalls);
+         }
+
+         Counter::Reset();
       }
 
 	};
