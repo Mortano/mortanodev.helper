@@ -177,7 +177,8 @@ namespace mortanodevhelpertest
 		{
 			using namespace std::string_literals;
 
-			mdv::Variant<std::string> v;
+         mdv::Variant<std::string> v("HansWurst"s);         
+         v.Get<std::string>();
 
 			v = "Hello"s;
 
