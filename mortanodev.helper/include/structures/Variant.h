@@ -88,11 +88,19 @@ public:
    Variant() : _index(InvalidIdx) {}
 
    Variant(const ThisType& other) {
-      ConstructHelper_t::CopyConstruct(other._data, _data, other._index);
+      if (other._index != InvalidIdx)
+      {
+         ConstructHelper_t::CopyConstruct(other._data, _data, other._index);
+      }
       _index = other._index;
    }
 
    Variant(ThisType&& other) {
+      if (other._index == InvalidIdx)
+      {
+         _index = InvalidIdx;
+         return;
+      }
       ConstructHelper_t::MoveConstruct(other._data, _data, other._index);
       _index = other._index;
       // We have to set the index of the other object to invalid when moving from

@@ -231,5 +231,168 @@ namespace mortanodevhelpertest
 			Assert::ExpectException<std::exception>([&v2]() { v2.Get<int>(); });
 		}
 
+      TEST_METHOD(Test_TwoPrimitives_CopyCtor)
+      {
+         using Var_t = mdv::Variant<int, float>;
+         Var_t v1(42);
+         Var_t v2(v1);
+
+         Assert::AreEqual(v1.HasValue(), v2.HasValue());
+         Assert::AreEqual(v1.Is<int>(), v2.Is<int>());
+         Assert::AreEqual(v1.Get<int>(), v2.Get<int>());
+
+         Var_t v3(42.f);
+         Var_t v4(v3);
+
+         Assert::AreEqual(v3.HasValue(), v4.HasValue());
+         Assert::AreEqual(v3.Is<float>(), v4.Is<float>());
+         Assert::AreEqual(v3.Get<float>(), v4.Get<float>());
+      }
+
+      TEST_METHOD(Test_TwoPrimitives_CopyFromEmpty)
+      {
+         using Var_t = mdv::Variant<int, float>;
+         Var_t v1;
+         Var_t v2(v1);
+
+         Assert::AreEqual(v1.HasValue(), v2.HasValue());
+         Assert::AreEqual(v1.Is<int>(), v2.Is<int>());
+         Assert::AreEqual(v1.Is<float>(), v2.Is<float>());
+      }
+
+      TEST_METHOD(Test_TwoPrimitives_MoveCtor)
+      {
+         using Var_t = mdv::Variant<int, float>;
+         Var_t v1(42);
+         Var_t v2(std::move(v1));
+
+         Assert::IsTrue(v2.HasValue());
+         Assert::IsTrue(v2.Is<int>());
+         Assert::AreEqual(42, v2.Get<int>());
+
+         Assert::IsFalse(v1.HasValue());
+         Assert::IsFalse(v1.Is<int>());
+
+         Var_t v3(42.f);
+         Var_t v4(std::move(v3));
+
+         Assert::IsTrue(v4.HasValue());
+         Assert::IsTrue(v4.Is<float>());
+         Assert::AreEqual(42.f, v4.Get<float>());
+
+         Assert::IsFalse(v3.HasValue());
+         Assert::IsFalse(v3.Is<float>());
+      }
+
+      TEST_METHOD(Test_TwoPrimitives_CopyAssing)
+      {
+         using Var_t = mdv::Variant<int, float>;
+
+         Var_t v1(42);
+         Var_t v2(23);
+
+         v2 = v1;
+
+         Assert::AreEqual(v1.HasValue(), v2.HasValue());
+         Assert::AreEqual(v1.Is<int>(), v2.Is<int>());
+         Assert::AreEqual(v1.Get<int>(), v2.Get<int>());
+
+         Var_t v3(42.f);
+         Var_t v4(23.f);
+
+         v4 = v3;
+
+         Assert::AreEqual(v3.HasValue(), v4.HasValue());
+         Assert::AreEqual(v3.Is<float>(), v4.Is<float>());
+         Assert::AreEqual(v3.Get<float>(), v4.Get<float>());
+
+         //Cross asign to different type!
+         v4 = v1;
+
+         Assert::AreEqual(v1.HasValue(), v4.HasValue());
+         Assert::AreEqual(v1.Is<int>(), v4.Is<int>());
+         Assert::AreEqual(v1.Get<int>(), v4.Get<int>());
+      }
+
+      TEST_METHOD(Test_TwoPrimitives_MoveAssign)
+      {
+
+         using Var_t = mdv::Variant<int, float>;
+
+         Var_t v1(42);
+         Var_t v2(23);
+
+         v2 = std::move(v1);
+
+         Assert::IsTrue(v2.HasValue());
+         Assert::IsTrue(v2.Is<int>());
+         Assert::AreEqual(42, v2.Get<int>());
+
+         Assert::IsFalse(v1.HasValue());
+         Assert::IsFalse(v1.Is<int>());
+
+         Var_t v3(42.f);
+         Var_t v4(23.f);
+
+         v4 = std::move(v3);
+
+         Assert::IsTrue(v4.HasValue());
+         Assert::IsTrue(v4.Is<float>());
+         Assert::AreEqual(42.f, v4.Get<float>());
+
+         Assert::IsFalse(v3.HasValue());
+         Assert::IsFalse(v3.Is<int>());
+         
+         //Cross asign to different type!
+         v4 = std::move(v2);
+
+         Assert::IsTrue(v4.HasValue());
+         Assert::IsTrue(v4.Is<int>());
+         Assert::AreEqual(42, v4.Get<int>());
+
+         Assert::IsFalse(v2.HasValue());
+         Assert::IsFalse(v2.Is<int>());
+      }
+
+      TEST_METHOD(Test_TwoPrimitives_ValueAssign)
+      {
+         using Var_t = mdv::Variant<int, float>;
+
+         Var_t v(42);
+
+         v = 42.f;
+
+         Assert::IsTrue(v.HasValue());
+         Assert::IsTrue(v.Is<float>());
+         Assert::AreEqual(42.f, v.Get<float>());
+
+         v = 23;
+
+         Assert::IsTrue(v.HasValue());
+         Assert::IsTrue(v.Is<int>());
+         Assert::AreEqual(23, v.Get<int>());
+      }
+
+      TEST_METHOD(Test_TwoPrimitives_Clear)
+      {
+         using Var_t = mdv::Variant<int, float>;
+
+         Var_t v1(23);
+
+         v1.Clear();
+
+         Assert::IsFalse(v1.HasValue());
+         Assert::IsFalse(v1.Is<int>());
+         Assert::IsFalse(v1.Is<float>());
+
+         Var_t v2(42.f);
+
+         v2.Clear();
+
+         Assert::IsFalse(v2.HasValue());
+         Assert::IsFalse(v2.Is<int>());
+         Assert::IsFalse(v2.Is<float>());
+      }
+
 	};
 }
