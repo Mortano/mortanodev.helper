@@ -10,6 +10,12 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 namespace mortanodevhelpertest
 {		
 
+   size_t operator"" _sz_t(unsigned long long val)
+   {
+      return static_cast<size_t>(val);
+   }
+
+
    struct Counter
    {
       static size_t DefaultCtorCalls;
@@ -57,7 +63,7 @@ namespace mortanodevhelpertest
 
 		TEST_METHOD(Test_Int_DefaultCtor)
 		{
-			mdv::Variant<int> v1;
+			mdv::Variant<int> v1;                  
 
 			Assert::IsFalse(v1.HasValue());
 			Assert::ExpectException<std::exception>([&v1]() { v1.Get<int>(); });
@@ -633,38 +639,38 @@ namespace mortanodevhelpertest
          {
             Var_t v1;
 
-            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(0ULL, Counter::DtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DtorCalls);
          }
 
          //No destructors must be called when empty Variant gets destroyed!
-         Assert::AreEqual(0ULL, Counter::DtorCalls);
+         Assert::AreEqual(0_sz_t, Counter::DtorCalls);
 
          {
             Var_t v2{Counter()};
 
-            Assert::AreEqual(1ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(1ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(1ULL, Counter::DtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::DtorCalls);
          }
 
-         Assert::AreEqual(2ULL, Counter::DtorCalls);
+         Assert::AreEqual(2_sz_t, Counter::DtorCalls);
          Counter::Reset();
 
          {
             Counter counter;
             Var_t v2{ counter };
 
-            Assert::AreEqual(1ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(1ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(0ULL, Counter::DtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DtorCalls);
          }
 
-         Assert::AreEqual(2ULL, Counter::DtorCalls); //'counter' object and copy inside the variant!
+         Assert::AreEqual(2_sz_t, Counter::DtorCalls); //'counter' object and copy inside the variant!
          Counter::Reset();
 
          {
@@ -675,13 +681,13 @@ namespace mortanodevhelpertest
 
             Var_t v2(v1);
 
-            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(1ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(0ULL, Counter::DtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DtorCalls);
          }
 
-         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Assert::AreEqual(3_sz_t, Counter::DtorCalls);
          Counter::Reset();
 
          {
@@ -692,13 +698,13 @@ namespace mortanodevhelpertest
 
             Var_t v2(std::move(v1));
 
-            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(1ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(0ULL, Counter::DtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DtorCalls);
          }
 
-         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Assert::AreEqual(3_sz_t, Counter::DtorCalls);
          Counter::Reset();
 
          {
@@ -711,13 +717,13 @@ namespace mortanodevhelpertest
 
             v2 = v1;
 
-            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(1ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(0ULL, Counter::DtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DtorCalls);
          }
 
-         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Assert::AreEqual(3_sz_t, Counter::DtorCalls);
          Counter::Reset();
 
          {
@@ -730,13 +736,13 @@ namespace mortanodevhelpertest
 
             v2 = std::move(v1);
 
-            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(1ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(0ULL, Counter::DtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DtorCalls);
          }
 
-         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Assert::AreEqual(3_sz_t, Counter::DtorCalls);
          Counter::Reset();
 
          {
@@ -746,10 +752,10 @@ namespace mortanodevhelpertest
 
             v1 = Counter();
 
-            Assert::AreEqual(1ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(1ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(2ULL, Counter::DtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(2_sz_t, Counter::DtorCalls);
 
             Counter tmp;
 
@@ -757,13 +763,13 @@ namespace mortanodevhelpertest
 
             v1 = tmp;
 
-            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(1ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(1ULL, Counter::DtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::DtorCalls);
          }
 
-         Assert::AreEqual(3ULL, Counter::DtorCalls);
+         Assert::AreEqual(3_sz_t, Counter::DtorCalls);
          Counter::Reset();
 
          {
@@ -773,14 +779,49 @@ namespace mortanodevhelpertest
 
             v1.Clear();
 
-            Assert::AreEqual(0ULL, Counter::DefaultCtorCalls);
-            Assert::AreEqual(0ULL, Counter::CopyCtorCalls);
-            Assert::AreEqual(0ULL, Counter::MoveCtorCalls);
-            Assert::AreEqual(1ULL, Counter::DtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::DefaultCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::CopyCtorCalls);
+            Assert::AreEqual(0_sz_t, Counter::MoveCtorCalls);
+            Assert::AreEqual(1_sz_t, Counter::DtorCalls);
          }
 
-         Counter::Reset();
+         Counter::Reset();         
       }
 
+
+//TODO We need some tool that checks the compiler output 
+#ifdef CHECK_IF_COMPILES
+
+      TEST_METHOD(Test_NonCopyable)
+      {
+         struct NonCopyable
+         {
+            NonCopyable() = default;
+            NonCopyable(const NonCopyable&) = delete;
+         };
+
+         mdv::Variant<NonCopyable> v;
+         mdv::Variant<NonCopyable> v2(v); 
+
+         mdv::Variant<int, NonCopyable> v3;
+         mdv::Variant<int, NonCopyable> v4(v3);
+      }
+
+      TEST_METHOD(Test_NonMoveable) 
+      {
+         struct NonMoveable
+         {
+            NonMoveable() = default;
+            NonMoveable(const NonMoveable&) = default;
+            NonMoveable(NonMoveable&&) = delete;
+         };
+
+         mdv::Variant<NonMoveable> v;
+         mdv::Variant<NonMoveable> v2(std::move(v)); //This should compile because we fall back to copy here!
+      }
+
+#endif
+
 	};
+
 }

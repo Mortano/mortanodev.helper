@@ -74,6 +74,18 @@ template <typename L, typename R>
 struct BiggerType {
    using type = std::conditional_t<sizeof(L) >= sizeof(R), L, R>;
 };
+
+//! \brief is_copy_constructible using bool_constant instead of a real value
+template <typename T>
+struct CopyConstructible {
+   using type = std::bool_constant<std::is_copy_constructible<T>::value>;
+};
+
+//! \brief is_move_constructible using bool_constant instead of a real value
+template <typename T>
+struct MoveConstructible {
+   using type = std::bool_constant<std::is_move_constructible<T>::value>;
+};
 }
 
 template <typename... Args>
@@ -85,16 +97,38 @@ public:
    using Types = meta::Typelist<Args...>;
    using ConstructHelper_t = detail::ConstructHelper<ArgCount - 1, Args...>;
 
+   // Little explanation what goes on down there: To obtain these results, we fold the complete
+   // argument list
+   // using logical AND. So if all values of the argument list are true, the result will be true,
+   // otherwise it
+   // will be false, hence this is a 'AllTypesSupport...' operation. Since our types are types and
+   // not expressions
+   // that are combinable by using logical AND, we transform them into bool_constants! 
+
+   //! \brief Do all types of this variant support copy construction?
+   using AllTypesSupportCopy =
+       meta::Foldl_t<meta::And,
+                     std::bool_constant<true>,
+                     meta::Transform_t<detail::CopyConstructible, Types>>;
+
+   //! \brief Do all types of this variant support move construction?
+   using AllTypesSupportMove =
+       meta::Foldl_t<meta::And,
+                     std::bool_constant<true>,
+                     meta::Transform_t<detail::MoveConstructible, Types>>;
+
    Variant() : _index(InvalidIdx) {}
 
-   Variant(const ThisType& other) {
+   template<typename U = AllTypesSupportCopy>
+   Variant(const ThisType& other, std::enable_if_t<U::value>* = nullptr) {      
       if (other._index != InvalidIdx) {
          ConstructHelper_t::CopyConstruct(other._data, _data, other._index);
       }
       _index = other._index;
    }
 
-   Variant(ThisType&& other) {
+   template<typename U = AllTypesSupportMove>
+   Variant(ThisType&& other, std::enable_if_t<U::value>* = nullptr) {
       if (other._index == InvalidIdx) {
          _index = InvalidIdx;
          return;
@@ -123,7 +157,8 @@ public:
       }
    }
 
-   Variant& operator=(const ThisType& other) {
+   template<typename U = AllTypesSupportCopy>
+   std::enable_if_t<U::value, Variant&> operator=(const ThisType& other) {      
       auto thisValid = _index != InvalidIdx;
       auto otherValid = other._index != InvalidIdx;
       if (thisValid) {
@@ -138,7 +173,8 @@ public:
       return *this;
    }
 
-   Variant& operator=(ThisType&& other) {
+   template<typename U = AllTypesSupportMove>
+   std::enable_if_t<U::value, Variant&> operator=(ThisType&& other) {      
       auto thisValid = _index != InvalidIdx;
       auto otherValid = other._index != InvalidIdx;
       if (thisValid) {
@@ -156,7 +192,8 @@ public:
 
    template <typename T, typename Decayed_t = std::decay_t<T>>
    std::enable_if_t<!std::is_same<ThisType, Decayed_t>::value, Variant&> operator=(T&& val) {
-      static_assert(meta::Contains<Decayed_t, Types>::value, "This is no valid type for this variant!");
+      static_assert(meta::Contains<Decayed_t, Types>::value,
+                    "This is no valid type for this variant!");
       if (_index != InvalidIdx) {
          ConstructHelper_t::Destruct(_data, _index);
       }
