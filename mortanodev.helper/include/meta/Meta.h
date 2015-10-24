@@ -1,5 +1,6 @@
 #pragma once
 #include <type_traits>
+#include <tuple>
 
 namespace mdv
 {
@@ -7,21 +8,51 @@ namespace mdv
 namespace meta
 {
 
+#pragma region Misc
+
+   //! \brief Always false meta type. This is needed for static asserts in some cases so that the compiler won't 
+   //!        evaluate the static_assert all the time
 	template<typename T> struct AlwaysFalse : std::false_type {};
+   //! \brief Always false meta type using size_t. This is needed for static asserts in some cases so that the compiler
+   //!        won't evaluate the static_assert all the time
 	template<size_t Idx> struct AlwaysFalseNumeric : std::false_type {};
 
+   //! \brief void_t trick
    template<typename...> using void_t = void;
 
+   //! \brief Redirects the first given type
    template<typename First, typename...>
    struct Redirect
    {
       using type = First;
    };
 
-//---------- Typelist ----------
-	template<typename... Args> struct Typelist {};
+   //! \brief sizeof as a meta function
+   template<typename T>
+   struct Sizeof :
+      std::integral_constant<size_t, sizeof(T)>
+   {
+   };
 
-//---------- Typelist operations ----------
+   template<size_t Value>
+   struct AsIntegralConstant
+   {
+      using type = std::integral_constant<size_t, Value>;
+   };
+
+   //! \brief Helper type alias that converts a size_t into a std::integral_constant that contains this value
+   template<size_t Value>
+   using AsIntegralConstant_t = typename AsIntegralConstant<Value>::type;
+
+   template<size_t Value>
+   using AsSize_t = size_t;
+
+#pragma endregion
+
+#pragma region Typelist
+
+   //! \brief Typelist structure
+	template<typename... Args> struct Typelist {};
 	
 #pragma region At
    template<size_t, typename> struct At;
@@ -78,6 +109,20 @@ namespace meta
    {
       constexpr static size_t value = static_cast<size_t>(-1);
    };
+#pragma endregion
+
+#pragma region Concat
+   template<typename, typename> struct Concat {};
+
+   template<typename... Left, typename... Right>
+   struct Concat<Typelist<Left...>, Typelist<Right...>>
+   {
+      using type = Typelist<Left..., Right...>;
+   };
+
+   //! \brief Concatenation of two Typelists by appending Right at the end of Left
+   template<typename Left, typename Right>
+   using Concat_t = typename Concat<Left, Right>::type;
 #pragma endregion
 
 #pragma region Contains
@@ -152,6 +197,33 @@ namespace meta
    template<typename TList>
    using Reverse_t = typename Reverse<TList>::type;
 
+#pragma endregion
+
+#pragma region Take
+   template<size_t, typename> struct Take;
+
+   template<size_t Count>
+   struct Take<Count, Typelist<>>
+   {
+      using type = Typelist<>;
+   };
+
+   template<size_t Count, typename First, typename... Rest>
+   struct Take<Count, Typelist<First, Rest...>>
+   {
+      using type = std::conditional_t<
+         Count == 0,
+         Typelist<>,
+         Concat_t<
+         Typelist<First>,
+         typename Take<Count - 1, Typelist<Rest...>>::type
+         >
+      >;
+   };
+
+   //! \brief Take metafunction that takes the first Count elements out of the given list
+   template<size_t Count, typename List>
+   using Take_t = typename Take<Count, List>::type;
 #pragma endregion
 
 #pragma region MaxOf
@@ -270,13 +342,118 @@ namespace meta
 
 #pragma endregion
 
-   //! \brief sizeof as a meta function
-   template<typename T>
-   struct Sizeof :
-      std::integral_constant<size_t, sizeof(T)>
+#pragma endregion
+
+#pragma region Numberlist
+
+   //! \brief Numberlist structure. This is the number-equivalent of Typelist. In principle, most of what Numberlist
+   //!        is capable of can be achieved by using Typelist with integral_constant, however Numberlist has a nicer
+   //!        syntax!
+   template<size_t... Values> struct Numberlist {};
+
+#pragma region At
+   template<size_t Idx, size_t Only>
+   struct At<Idx, Numberlist<Only>> :
+      std::integral_constant<size_t, Only>
    {
+      static_assert(Idx == 0, "Index out of bounds!");
    };
 
+   //! \brief Access an element of a Numberlist
+   template<size_t Idx, size_t First, size_t... Rest>
+   struct At<Idx, Numberlist<First, Rest...>> :
+      std::integral_constant<size_t, Idx == 0 ? First : At<Idx - 1, Numberlist<Rest...>>::value>
+   {
+   };
+#pragma endregion
+
+#pragma region Size
+   //! \brief Number of elements of a Numberlist
+   template<size_t... Values>
+   struct Size<Numberlist<Values...>> :
+      std::integral_constant<size_t, sizeof...(Values)>
+   {
+   };
+#pragma endregion
+
+#pragma region Sum
+   template<typename> struct Sum;
+
+   //! \brief Sum of the elements of an empty Numberlist, which of course is zero
+   template<>
+   struct Sum<Numberlist<>> : std::integral_constant<size_t, 0> {};
+
+   //! \brief Sum of the elements of a Numberlist
+   template<size_t First, size_t... Rest>
+   struct Sum<Numberlist<First, Rest...>> :
+      std::integral_constant<size_t, First + Sum<Numberlist<Rest...>>::value>
+   {
+   };
+#pragma endregion
+
+#pragma region PushBack
+   template<size_t, typename> struct NumberlistPushBack {};
+
+   //! \brief PushBack for numberlists. Sadly, since the first argument has to be a size_t, we can't reuse the
+   //!        ordinary PushBack here. It would kinda work with integral_constant, however we can't redefine the
+   //!        type alias PushBack_t with a size_t as first argument
+   template<size_t Value, size_t... Args>
+   struct NumberlistPushBack<Value, Numberlist<Args...>>
+   {
+      using type = Numberlist<Args..., Value>;
+   };
+
+   //! \brief PushBack metafunction for Numberlists
+   template<size_t Value, typename Numberlist>
+   using NumberlistPushBack_t = typename NumberlistPushBack<Value, Numberlist>::type;
+#pragma endregion
+
+#pragma region Concat
+   template<size_t... Left, size_t... Right>
+   struct Concat<Numberlist<Left...>, Numberlist<Right...>>
+   {
+      using type = Numberlist<Left..., Right...>;
+   };
+#pragma endregion
+
+#pragma region Take
+   template<size_t Count>
+   struct Take<Count, Numberlist<>>
+   {
+      using type = Numberlist<>;
+   };
+
+   template<size_t Count, size_t First, size_t... Rest>
+   struct Take<Count, Numberlist<First, Rest...>>
+   {
+      using type = std::conditional_t<
+         Count == 0,
+         Numberlist<>,
+         Concat_t<
+            Numberlist<First>, 
+            typename Take<Count - 1, Numberlist<Rest...>>::type
+         >
+      >;
+   };
+#pragma endregion
+
+#pragma region AsTuple
+   template<typename> struct AsTuple {};
+
+   template<size_t... Values>
+   struct AsTuple<Numberlist<Values...>>
+   {
+      using type = std::tuple<AsSize_t<Values>...>;
+   };
+
+   //! \brief Converts between a parameter pack of size_t into a tuple of size_t
+   //!
+   //! Example: The parameter pack is <1,2,3>. The resulting tuple is std::tuple<size_t, size_t, size_t>
+   template<size_t... Values>
+   using AsTuple_t = typename AsTuple<Numberlist<Values...>>::type;
+#pragma endregion
+
+#pragma endregion
 
 }
 

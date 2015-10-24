@@ -137,6 +137,7 @@
   <ItemGroup>
     <ClInclude Include="include\error_handling\Assert.h" />
     <ClInclude Include="include\meta\Meta.h" />
+    <ClInclude Include="include\structures\Bitmask.h" />
     <ClInclude Include="include\structures\Variant.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

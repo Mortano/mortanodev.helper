@@ -24,5 +24,8 @@
     <ClInclude Include="include\error_handling\Assert.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\structures\Bitmask.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
