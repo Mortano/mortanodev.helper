@@ -362,8 +362,9 @@ namespace meta
    //! \brief Access an element of a Numberlist
    template<size_t Idx, size_t First, size_t... Rest>
    struct At<Idx, Numberlist<First, Rest...>> :
-      std::integral_constant<size_t, Idx == 0 ? First : At<Idx - 1, Numberlist<Rest...>>::value>
+      std::integral_constant<size_t, Idx == 0 ? First : At<Idx == 0 ? 0 : Idx - 1, Numberlist<Rest...>>::value>
    {
+      static_assert(Idx < (1 + sizeof...(Rest)), "Index out of bounds!");
    };
 #pragma endregion
 

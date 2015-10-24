@@ -14,13 +14,13 @@ namespace mdv
       template<size_t Size>
       using SizeToType_t =
          std::conditional_t<
-            Size <= sizeof(uint8_t),
+            Size <= sizeof(uint8_t) * 8,
             uint8_t,
             std::conditional_t<
-               Size <= sizeof(uint16_t),
+               Size <= sizeof(uint16_t) * 8,
                uint16_t,
                std::conditional_t<
-                  Size <= sizeof(uint32_t),
+                  Size <= sizeof(uint32_t) * 8,
                   uint32_t,
                   uint64_t                   //Bitmask asserts that the sum is not greater than 64 bits, so this is ok!
                >
@@ -71,6 +71,8 @@ namespace mdv
 
       //! \brief Constructor that takes a tuple that contains one size_t for each of the sections of this Bitmask
       //! \param args Tuple containing one size_t for each section of this Bitmask
+      //! TODO Does it make more sense to just use an array / initializer_list here? Tuple is better because we can
+      //! track the actual types (uint8_t, uint16_t etc.), but it's also more cumbersome to write...
       explicit Bitmask(const TupleOfBits_t& args)
       {
          using Sequence_t = std::make_integer_sequence<size_t, Sections>;
@@ -150,7 +152,7 @@ namespace mdv
          };
       }
 
-      using Data_t = detail::SizeToType_t<RequiredBytes>;
+      using Data_t = detail::SizeToType_t<RequiredSize>;
       Data_t _data;
    };
 
