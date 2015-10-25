@@ -22,6 +22,11 @@ namespace Microsoft {
 namespace mortanodevhelpertest
 {
 
+   constexpr static struct FirstSection : std::integral_constant<size_t, 2> {} Section1;
+   constexpr static struct SecondSection : std::integral_constant<size_t, 4> {} Section2;
+   constexpr static struct ThirdSection : std::integral_constant<size_t, 7> {} Section3;
+   constexpr static struct FourthSection : std::integral_constant<size_t, 3> {} Section4;
+
    TEST_CLASS(BitmaskTest)
    {
    public:
@@ -165,6 +170,56 @@ namespace mortanodevhelpertest
          Assert::AreEqual(static_cast<uint16_t>(l1), m.Get<0>());
          Assert::AreEqual(static_cast<uint16_t>(l2), m.Get<1>());
 
+      }
+
+      TEST_METHOD(Test_ManyFields_Set)
+      {
+         using Mask = Bitmask<2, 3, 12, 4, 7, 2>;
+         Mask m;
+
+         const auto l0 = 0b11;
+         const auto l1 = 0b011;
+         const auto l2 = 0b010101010101;
+         const auto l3 = 0b0111;
+         const auto l4 = 0b01010101;
+         const auto l5 = 0b01;
+
+         m.Set<0>(l0);
+         m.Set<1>(l1);
+         m.Set<2>(l2);
+         m.Set<3>(l3);
+         m.Set<4>(l4);
+         m.Set<5>(l5);
+
+         Assert::AreEqual(static_cast<uint8_t>(l0), m.Get<0>());
+         Assert::AreEqual(static_cast<uint8_t>(l1), m.Get<1>());
+         Assert::AreEqual(static_cast<uint16_t>(l2), m.Get<2>());
+         Assert::AreEqual(static_cast<uint8_t>(l3), m.Get<3>());
+         Assert::AreEqual(static_cast<uint8_t>(l4), m.Get<4>());
+         Assert::AreEqual(static_cast<uint8_t>(l5), m.Get<5>());
+      }
+
+      TEST_METHOD(Test_UseTypesForSections)
+      {
+         //using Mask = Bitmask<Section1(), Section2(), Section3(), Section4()>;
+         //static_assert(sizeof(Mask) == sizeof(uint16_t), "Wrong size!");
+         //
+         //Mask m;
+         //
+         //const auto l0 = 0b11;
+         //const auto l1 = 0b0101;
+         //const auto l2 = 0b0101011;
+         //const auto l3 = 0b011;
+         //
+         //m.Set<Section1()>(l0);
+         //m.Set<Section2()>(l1);
+         //m.Set<Section3()>(l2);
+         //m.Set<Section4()>(l3);
+         //
+         //Assert::AreEqual(static_cast<uint8_t>(l0), m.Get<Section1()>());
+         //Assert::AreEqual(static_cast<uint8_t>(l1), m.Get<Section2()>());
+         //Assert::AreEqual(static_cast<uint8_t>(l2), m.Get<Section3()>());
+         //Assert::AreEqual(static_cast<uint8_t>(l3), m.Get<Section4()>());
       }
 
       //Some static asserts

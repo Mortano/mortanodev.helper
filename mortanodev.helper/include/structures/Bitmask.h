@@ -159,4 +159,94 @@ namespace mdv
    template<>
    class Bitmask<> {};
 
+   //! \brief Bitmask class that uses named sections
+   template<typename... NamedBits>
+   class NamedBitmask
+   {
+   public:
+      using NamedSections = meta::Typelist<NamedBits...>;
+      using Numbers = meta::NumberlistFromTypelist_t<NamedSections>;
+      constexpr static size_t Sections = meta::Size<Numbers>::value;
+      constexpr static size_t RequiredSize = meta::Sum<Numbers>::value;
+
+      constexpr NamedBitmask() :
+         _data(0)
+      {
+      }
+
+      NamedBitmask(const NamedBitmask& other)
+      {
+         _data = other._data;
+      }
+
+      NamedBitmask& operator=(const NamedBitmask& other)
+      {
+         _data = other._data;
+         return *this;
+      }
+
+      template<
+         typename Section,
+         typename ValueSize_t = detail::SizeToType_t<
+            meta::At_t<
+               meta::IndexOf<Section, NamedSections>::value, Numbers
+            >::value
+         >
+      >
+      void Set(ValueSize_t value)
+      {
+         static_assert(meta::Contains<Section, NamedSections>::value, "Section not found in this Bitmask!");
+
+         //First get the index of the section from the NamedSections typelist
+         constexpr static size_t SectionIndex = meta::IndexOf<Section, NamedSections>::value;
+         //Get the previous sections of this bitmask, these are the bits that we have to skip
+         using Previous_t = meta::Take_t<SectionIndex, Numbers>;
+         //By summing the elements of the previous section, we get the total bit count to skip
+         constexpr static size_t OffsetBits = meta::Sum<Previous_t>::value;
+         //We also need the size of the current section
+         constexpr static size_t SectionBits = meta::At_t<SectionIndex, Numbers>::value;
+         //Now we can create a mask of the size of the current section
+         constexpr static size_t Mask = detail::Mask<SectionBits>::value;
+
+         //First clear the data because we don't want any bits to remain in the section
+         _data &= ~(Mask << OffsetBits);
+         //Then set the new bits
+         _data |= (value & Mask) << OffsetBits;
+      }
+
+      //! \brief Get the value inside this bitmask at the given section
+      //! \returns Value of the section at Index
+      //! \tparam Section The section to get the value from 
+      template<typename Section>
+      decltype(auto) Get() const
+      {
+         static_assert(meta::Contains<Section, NamedSections>::value, "Section not found in this Bitmask!");
+
+         //First get the index of the section from the NamedSections typelist
+         constexpr static size_t SectionIndex = meta::IndexOf<Section, NamedSections>::value;
+         //Get the previous sections of this bitmask, these are the bits that we have to skip
+         using Previous_t = meta::Take_t<SectionIndex, Numbers>;
+         //By summing the elements of the previous section, we get the total bit count to skip
+         constexpr static size_t OffsetBits = meta::Sum<Previous_t>::value;
+         //We also need the size of the current section
+         constexpr static size_t SectionBits = meta::At_t<SectionIndex, Numbers>::value;
+         //Now we can create a mask of the size of the current section
+         constexpr static size_t Mask = detail::Mask<SectionBits>::value;
+         //And, neat sideeffect, we can determine the correct return type from the size of the current section
+         using Return_t = detail::SizeToType_t<SectionBits>;
+
+         return static_cast<Return_t>((_data >> OffsetBits) & Mask);
+      }
+
+   private:
+      constexpr static size_t RequiredBytes = (RequiredSize + 7) / 8;
+      static_assert(RequiredBytes <= sizeof(uint64_t), "Maximum bitmask size exceeded! Largest supported type is uint64_t!");
+
+      using Data_t = detail::SizeToType_t<RequiredSize>;
+      Data_t _data;
+   };
+
+   template<>
+   class NamedBitmask<> {};
+
 }

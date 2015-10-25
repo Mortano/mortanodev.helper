@@ -454,6 +454,24 @@ namespace meta
    using AsTuple_t = typename AsTuple<Numberlist<Values...>>::type;
 #pragma endregion
 
+#pragma region FromTypelist
+   template<typename T>
+   struct ToSize_t : std::integral_constant<size_t, T::value> {};
+
+   template<typename> struct NumberlistFromTypelist {};
+
+   template<typename... Args>
+   struct NumberlistFromTypelist<Typelist<Args...>>
+   {
+      using type = Numberlist<ToSize_t<Args>::value...>;
+   };
+
+   //! \brief Creates a Numberlist from a Typelist by creating an instance from it and using the implicit conversion
+   //!        to size_t.
+   template<typename Typelist>
+   using NumberlistFromTypelist_t = typename NumberlistFromTypelist<Typelist>::type;
+#pragma endregion
+
 #pragma endregion
 
 }
