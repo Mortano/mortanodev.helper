@@ -44,14 +44,10 @@ namespace mortanodevhelpertest
 
       TEST_METHOD(Test_OneField_TupleCtor)
       {
-         //TODO Implement
-         Assert::Fail(L"Not implemented!");
-         //using Mask = Bitmask<1>;
-         //std::tuple<size_t> args;
-         //std::get<0>(args) = 1;
-         //
-         //Mask m{ args };
-         //Assert::AreEqual(static_cast<uint8_t>(1), m.Get<0>());
+         using Mask = NamedBitmask<_SectionOneBit>;
+         
+         Mask m{ 1 };
+         Assert::AreEqual(static_cast<uint8_t>(1), m.Get<_SectionOneBit>());
       }
 
       TEST_METHOD(Test_OneField_Set)
@@ -83,16 +79,14 @@ namespace mortanodevhelpertest
 
       TEST_METHOD(Test_TwoFields_TupleCtor)
       {
-         Assert::Fail(L"Not implemented!");
-         //using Mask = Bitmask<3, 3>;
-         //
-         //std::tuple<size_t, size_t> args;
-         //std::get<0>(args) = 3;
-         //std::get<1>(args) = 3;
-         //
-         //Mask m{ args };
-         //Assert::AreEqual(static_cast<uint8_t>(std::get<0>(args)), m.Get<0>());
-         //Assert::AreEqual(static_cast<uint8_t>(std::get<1>(args)), m.Get<1>());
+         using Mask = NamedBitmask<_Section1, _Section2>;
+
+         const auto l0 = static_cast<uint8_t>(0b11);
+         const auto l1 = static_cast<uint8_t>(0b0111);
+         
+         Mask m{ l0, l1 };
+         Assert::AreEqual(static_cast<uint8_t>(l0), m.Get<_Section1>());
+         Assert::AreEqual(static_cast<uint8_t>(l1), m.Get<_Section2>());
       }
 
       TEST_METHOD(Test_TwoFields_CopyCtor)
@@ -138,13 +132,12 @@ namespace mortanodevhelpertest
 
       TEST_METHOD(Test_OneBigField_TupleCtor)
       {
-         Assert::Fail(L"Not implemented!");
-         //using Mask = Bitmask<32>;
-         //std::tuple<size_t> args;
-         //std::get<0>(args) = 0x8f8f8f8f;
-         //
-         //Mask m{ args };
-         //Assert::AreEqual(static_cast<uint32_t>(std::get<0>(args)), m.Get<0>());
+         using Mask = NamedBitmask<_LargeSection>;
+
+         const auto arg = 0x8f8f8f8f;
+         
+         Mask m{ arg };
+         Assert::AreEqual(static_cast<uint32_t>(arg), m.Get<_LargeSection>());
       }
 
       TEST_METHOD(Test_OneBigField_CopyCtor)

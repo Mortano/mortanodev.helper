@@ -12,20 +12,25 @@ namespace mdv
    {
 
       template<size_t Size>
-      using SizeToType_t =
-         std::conditional_t<
-            Size <= sizeof(uint8_t) * 8,
-            uint8_t,
-            std::conditional_t<
-               Size <= sizeof(uint16_t) * 8,
-               uint16_t,
-               std::conditional_t<
-                  Size <= sizeof(uint32_t) * 8,
-                  uint32_t,
-                  uint64_t                   //Bitmask asserts that the sum is not greater than 64 bits, so this is ok!
-               >
-            >
-         >;
+      struct SizeToType
+      {
+         using type = std::conditional_t<
+             Size <= sizeof(uint8_t) * 8,
+             uint8_t,
+             std::conditional_t<Size <= sizeof(uint16_t) * 8,
+                                uint16_t,
+                                std::conditional_t<Size <= sizeof(uint32_t) * 8,
+                                                   uint32_t,
+                                                   uint64_t  // Bitmask asserts that the sum is not
+                                                             // greater than 64 bits, so this is ok!
+                                                   > > >;
+      };
+
+      template<size_t Size>
+      using SizeToType_t = typename SizeToType<Size>::type;
+
+      template<typename T>
+      using SizeTypeToType_t = typename SizeToType<T::value>::type;
 
       //! \brief Creates a mask where the first Size bits are set
       //!
@@ -49,6 +54,54 @@ namespace mdv
       {
       };
 
+      template<
+         typename SectionList,      //A list with all sections of the Bitmask
+         size_t CumulativeOffset   //The cumulative offset of all previous sections
+      >
+      struct MaskAndOffset
+      {
+      };
+
+      //Once this works, I will never be able to understand it :(
+
+      template<
+         size_t FirstSection, 
+         size_t... OtherSections, 
+         size_t CumulativeOffset>
+      struct MaskAndOffset<
+         meta::Numberlist<FirstSection, OtherSections...>, 
+         CumulativeOffset
+      >
+      {
+         template<typename First, typename... Other>
+         static uint64_t Get(First first, Other... other)
+         {
+            static_assert(sizeof...(OtherSections) == sizeof...(Other), "Section parameter pack and function arguments must have the same size!");
+      
+            constexpr static size_t Mask = detail::Mask<FirstSection>::value;
+            //Mask and shift the current value and then OR with the remaining values
+            return ((first & Mask) << CumulativeOffset) |
+               MaskAndOffset<
+                  meta::Numberlist<OtherSections...>, //Skip the current section
+                  CumulativeOffset + FirstSection    //Add the size of this section to the offset
+               >::Get(other...);
+         }
+      };
+      
+      template<size_t FirstSection, size_t CumulativeOffset>
+      struct MaskAndOffset<
+         meta::Numberlist<FirstSection>,
+         CumulativeOffset
+      >
+      {
+         template<typename First>
+         static uint64_t Get(First first)
+         {
+            constexpr static size_t Mask = detail::Mask<FirstSection>::value;
+            return ((first & Mask) << CumulativeOffset);
+         }
+      };
+
    }
 
    //! \brief Super-awesome Bitmask of variable size
@@ -64,32 +117,38 @@ namespace mdv
       constexpr static size_t Sections = meta::Size<Numbers>::value;
       constexpr static size_t RequiredSize = meta::Sum<Numbers>::value;     
 
+      //! \brief Default ctor, sets all bits to zero
       constexpr Bitmask() : 
          _data(0)
       {
       }
 
-      //! \brief Constructor that takes a tuple that contains one size_t for each of the sections of this Bitmask
-      //! \param args Tuple containing one size_t for each section of this Bitmask
-      //! TODO Does it make more sense to just use an array / initializer_list here? Tuple is better because we can
-      //! track the actual types (uint8_t, uint16_t etc.), but it's also more cumbersome to write...
-      explicit Bitmask(const TupleOfBits_t& args)
+      //! \brief Initializes this bitmask with the given values
+      //! \param args One value for each section of this Bitmask. The type of that value matches the size of 
+      //!             the section (uint8_t for 8 bit or less, uint16_t for 16 bits or less etc.)
+      constexpr explicit Bitmask(detail::SizeToType_t<Bits>... args) :
+         _data(0) //TODO Assemble all args into one bitmask at once and assign this to _data!
       {
-         using Sequence_t = std::make_integer_sequence<size_t, Sections>;
-         SetAllFromTuple(args, Sequence_t());
+         using Indices_t = std::make_index_sequence<Sections>;
+         SetAllFromArgs(args..., Indices_t());
       }
 
+      //! \brief Copy ctor
       Bitmask(const Bitmask& other)         
       {
          _data = other._data;
       }
 
+      //! \brief Copy assignment
       Bitmask& operator=(const Bitmask& other)
       {
          _data = other._data;
          return *this;
       }
 
+      //! \brief Sets the bits of the section with the given index
+      //! \param value Value for the bits in the section
+      //! \tparam Index The index of the section for which to set the bits
       template<
          size_t Index,
          typename ValueSize_t = detail::SizeToType_t<
@@ -144,11 +203,11 @@ namespace mdv
       //! \brief Sets each section value by extracting the corresponding value from the tuple
       //! This uses an index_sequence to set along the elements of the tuple, get each element and call Set<> for each element
       template<size_t... Is>
-      void SetAllFromTuple(const TupleOfBits_t& tuple, std::index_sequence<Is...>)
+      inline void SetAllFromArgs(detail::SizeToType_t<Bits>... args, std::index_sequence<Is...>)
       {
          using swallow = int[];
          (void)swallow {
-            0, ((void)Set<Is>( std::get<Is>(tuple) ),0)...
+            0, ((void)Set<Is>( args ),0)...
          };
       }
 
@@ -171,6 +230,14 @@ namespace mdv
 
       constexpr NamedBitmask() :
          _data(0)
+      {
+      }
+
+      //! \brief Initializes this bitmask with the given values
+      //! \param args One value for each section of this Bitmask. The type of that value matches the size of 
+      //!             the section (uint8_t for 8 bit or less, uint16_t for 16 bits or less etc.)
+      constexpr explicit NamedBitmask(detail::SizeTypeToType_t<NamedBits>... args) :
+         _data(static_cast<decltype(_data)>(detail::MaskAndOffset<Numbers, 0>::Get(args...)))
       {
       }
 

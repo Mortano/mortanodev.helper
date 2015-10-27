@@ -37,13 +37,11 @@ namespace mortanodevhelpertest
          Assert::AreEqual(static_cast<uint8_t>(0), m.Get<0>());
       }
 
-      TEST_METHOD(Test_OneField_TupleCtor)
+      TEST_METHOD(Test_OneField_ArgsCtor)
       {
          using Mask = Bitmask<1>;
-         std::tuple<size_t> args;
-         std::get<0>(args) = 1;
 
-         Mask m{ args };
+         Mask m{ 1 };
          Assert::AreEqual(static_cast<uint8_t>(1), m.Get<0>());
       }
 
@@ -74,32 +72,24 @@ namespace mortanodevhelpertest
          Assert::AreEqual(static_cast<uint8_t>(0), m.Get<1>());
       }
 
-      TEST_METHOD(Test_TwoFields_TupleCtor)
+      TEST_METHOD(Test_TwoFields_ArgsCtor)
       {
          using Mask = Bitmask<3, 3>;
          
-         std::tuple<size_t, size_t> args;
-         std::get<0>(args) = 3;
-         std::get<1>(args) = 3;
-         
-         Mask m{ args };
-         Assert::AreEqual(static_cast<uint8_t>(std::get<0>(args)), m.Get<0>());
-         Assert::AreEqual(static_cast<uint8_t>(std::get<1>(args)), m.Get<1>());
+         Mask m{ 3, 3 };
+         Assert::AreEqual(static_cast<uint8_t>(3), m.Get<0>());
+         Assert::AreEqual(static_cast<uint8_t>(3), m.Get<1>());
       }
 
       TEST_METHOD(Test_TwoFields_CopyCtor)
       {
          using Mask = Bitmask<3, 3>;
 
-         std::tuple<size_t, size_t> args;
-         std::get<0>(args) = 3;
-         std::get<1>(args) = 3;
-
-         Mask m{ args };
+         Mask m{ 3, 3 };
          Mask copy{ m };
 
-         Assert::AreEqual(m.Get<0>(), copy.Get<0>());
-         Assert::AreEqual(m.Get<1>(), copy.Get<1>());
+         Assert::AreEqual(static_cast<uint8_t>(3), copy.Get<0>());
+         Assert::AreEqual(static_cast<uint8_t>(3), copy.Get<1>());
       }
 
       TEST_METHOD(Test_TwoFields_Set)
@@ -125,20 +115,18 @@ namespace mortanodevhelpertest
       TEST_METHOD(Test_OneBigField_TupleCtor)
       {
          using Mask = Bitmask<32>;
-         std::tuple<size_t> args;
-         std::get<0>(args) = 0x8f8f8f8f;
+         const auto val = 0x8f8f8f8f;
 
-         Mask m{ args };
-         Assert::AreEqual(static_cast<uint32_t>(std::get<0>(args)), m.Get<0>());
+         Mask m{ val };
+         Assert::AreEqual(static_cast<uint32_t>(val), m.Get<0>());
       }
 
       TEST_METHOD(Test_OneBigField_CopyCtor)
       {
          using Mask = Bitmask<32>;
-         std::tuple<size_t> args;
-         std::get<0>(args) = 0x8f8f8f8f;
+         const auto val = 0x8f8f8f8f;
 
-         Mask m{ args };
+         Mask m{ val };
          Mask copy{ m };
 
          Assert::AreEqual(m.Get<0>(), copy.Get<0>());

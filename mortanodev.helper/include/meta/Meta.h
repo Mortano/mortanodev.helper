@@ -44,8 +44,19 @@ namespace meta
    template<size_t Value>
    using AsIntegralConstant_t = typename AsIntegralConstant<Value>::type;
 
+   //! \brief Converts between an actual size_t and the type size_t
    template<size_t Value>
    using AsSize_t = size_t;
+
+   //! \brief Stores the ::value of the given type as integral_constant
+   template<typename T>
+   struct ToSize_t : std::integral_constant<size_t, T::value> {};
+
+   //! \brief Helpful metafunction that ignores all arguments, can be used to expand a parameter pack (but beware 
+   //!        of the unspecified execution order of arguments!)
+   //! Shout out to http://florianjw.de/en/variadic_templates.html 
+   template<typename... Args>
+   void IgnoreReturnvalues(Args&&...) {}
 
 #pragma endregion
 
@@ -455,9 +466,6 @@ namespace meta
 #pragma endregion
 
 #pragma region FromTypelist
-   template<typename T>
-   struct ToSize_t : std::integral_constant<size_t, T::value> {};
-
    template<typename> struct NumberlistFromTypelist {};
 
    template<typename... Args>
